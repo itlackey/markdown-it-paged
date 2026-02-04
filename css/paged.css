@@ -1,0 +1,13 @@
+/* markdown-it-paged: minimal Paged.js-friendly hooks */
+
+/* Hard page breaks from @break */
+.md-break { break-before: page; }
+
+/* Explicit pages */
+.page { break-before: page; }
+
+/* Optional: spread group starts on a fresh page */
+.spread { break-before: page; }
+
+/* Best-effort: keep regions together */
+.region { break-inside: avoid; }
