@@ -39,7 +39,6 @@
     "build": "node scripts/build.js",
     "test": "vitest",
     "test:update": "vitest -u",
-    "lint": "node scripts/lint.js",
     "prepare": "npm run build",
     "example:render": "node examples/render.js examples/demo.md > examples/demo.html"
   },
