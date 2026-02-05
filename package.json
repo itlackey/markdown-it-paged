@@ -1,7 +1,7 @@
 {
   "name": "markdown-it-paged",
   "version": "0.1.0",
-  "description": "Markdown-it extension providing @spread/@page/@section/@break markers for print-friendly DOM wrappers (Paged.js compatible, zero Paged.js code).",
+  "description": "Markdown-it extension providing @spread/@page/@section/@break markers for print-friendly DOM wrappers (Paged.js compatible).",
   "keywords": [
     "markdown-it",
     "pagedjs",
@@ -10,11 +10,11 @@
     "markdown",
     "layout"
   ],
-  "license": "MIT",
-  "author": "",
+  "license": "CC-BY-4.0",
+  "author": "itlackey",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-org/markdown-it-paged.git"
+    "url": "git+https://github.com/itlackey/markdown-it-paged.git"
   },
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -44,6 +44,6 @@
   },
   "devDependencies": {
     "markdown-it": "^14.1.0",
-    "vitest": "^2.1.9"
+    "vitest": "^4.0.18"
   }
 }
