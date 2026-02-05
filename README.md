@@ -7,11 +7,10 @@ A **markdown-it** extension that lets authors opt-in to print/layout structure u
 - `@section` → opens a region wrapper (content area within a page)
 - `@break` → closes the **nearest open scope** (section → page → spread) and inserts a hard page break marker
 
-It generates **only HTML wrappers + CSS hooks**. There is **zero Paged.js code** in this repo.
-
 ## Why
 
 For print workflows (e.g. Paged.js), authors often need occasional control:
+
 - group content into a spread
 - force a new page at a specific point
 - create named regions that CSS can position/flow
@@ -174,4 +173,4 @@ npm run example:render
 
 ## License
 
-MIT
+CC-BY-4.0
