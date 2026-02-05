@@ -1,0 +1,58 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`markdown-it-paged > adhoc spread + break wraps only the marked region 1`] = `
+"<p>Before.</p>
+<div class="spread fullbleed" data-spread="s1"><p>Inside spread.</p>
+</div><div class="md-break" aria-hidden="true"><p>After.</p>
+"
+`;
+
+exports[`markdown-it-paged > adhoc spread + break wraps only the marked region 2`] = `[]`;
+
+exports[`markdown-it-paged > break closes nearest scope (section then page then spread) 1`] = `
+"<div class="spread" data-spread="s"><div class="page" data-page="p"><div class="region" data-section="a"><p>A</p>
+</div><div class="md-break" aria-hidden="true"><p>B</p>
+</div><div class="md-break" aria-hidden="true"><p>C</p>
+</div><div class="md-break" aria-hidden="true"><p>D</p>
+"
+`;
+
+exports[`markdown-it-paged > break closes nearest scope (section then page then spread) 2`] = `[]`;
+
+exports[`markdown-it-paged > does nothing when no markers are used (opt-in) 1`] = `
+"<h1>Title</h1>
+<p>This is normal markdown.</p>
+"
+`;
+
+exports[`markdown-it-paged > does nothing when no markers are used (opt-in) 2`] = `[]`;
+
+exports[`markdown-it-paged > explicit spread + pages + sections 1`] = `
+"<div class="spread" data-spread="ch1" data-template="spread"><div class="page" data-page="left" data-template="spread-left"><div class="region hero" data-section="hero" data-region="left"><h1>Hello</h1>
+<p>Text</p>
+</div></div><div class="page" data-page="right" data-template="spread-right"><div class="region" data-section="body" data-region="right"><p>More</p>
+</div></div></div>"
+`;
+
+exports[`markdown-it-paged > explicit spread + pages + sections 2`] = `[]`;
+
+exports[`markdown-it-paged > section without page triggers implicit page + warning 1`] = `
+"<div class="page" data-page="auto"><div class="region" data-section="intro"><p>Hello</p>
+"
+`;
+
+exports[`markdown-it-paged > section without page triggers implicit page + warning 2`] = `
+[
+  {
+    "line": 1,
+    "marker": {
+      "__line": 1,
+      "attrs": {},
+      "kind": "section",
+      "name": "intro",
+    },
+    "message": "@section used without an open @page; creating an implicit page wrapper (data-page="auto").",
+    "type": "implicit_page",
+  },
+]
+`;
