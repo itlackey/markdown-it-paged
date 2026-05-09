@@ -382,7 +382,7 @@ function plugin(md, pluginOptions = {}) {
   md.renderer.rules.layout_page_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
-  md.renderer.rules.layout_break = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_break = () => '<div class="md-break" aria-hidden="true"></div>';
 
   // Marker tokens are transformed away
   md.renderer.rules.layout_marker = () => '';

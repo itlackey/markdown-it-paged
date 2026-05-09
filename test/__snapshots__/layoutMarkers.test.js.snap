@@ -3,7 +3,7 @@
 exports[`markdown-it-paged > adhoc spread + break wraps only the marked region 1`] = `
 "<p>Before.</p>
 <div class="spread fullbleed" data-spread="s1"><p>Inside spread.</p>
-</div><div class="md-break" aria-hidden="true"><p>After.</p>
+</div><div class="md-break" aria-hidden="true"></div><p>After.</p>
 "
 `;
 
@@ -11,9 +11,9 @@ exports[`markdown-it-paged > adhoc spread + break wraps only the marked region 2
 
 exports[`markdown-it-paged > break closes nearest scope (section then page then spread) 1`] = `
 "<div class="spread" data-spread="s"><div class="page" data-page="p"><div class="region" data-section="a"><p>A</p>
-</div><div class="md-break" aria-hidden="true"><p>B</p>
-</div><div class="md-break" aria-hidden="true"><p>C</p>
-</div><div class="md-break" aria-hidden="true"><p>D</p>
+</div><div class="md-break" aria-hidden="true"></div><p>B</p>
+</div><div class="md-break" aria-hidden="true"></div><p>C</p>
+</div><div class="md-break" aria-hidden="true"></div><p>D</p>
 "
 `;
 
@@ -67,7 +67,7 @@ exports[`markdown-it-paged > supports space-delimited class lists on markers 2`]
 exports[`markdown-it-paged > wraps content in chapter containers until the next chapter or eof 1`] = `
 "<div class="chapter intro opener"><h1>Intro</h1>
 <div class="page featured" data-page="cover" data-template="chapter"><div class="region prose" data-section="body" data-region="main"><p>Welcome</p>
-</div><div class="md-break" aria-hidden="true"><p>Still in the first chapter.</p>
+</div><div class="md-break" aria-hidden="true"></div><p>Still in the first chapter.</p>
 </div></div><div class="chapter appendix"><h2>Appendix</h2>
 <p>Done.</p>
 </div>"
