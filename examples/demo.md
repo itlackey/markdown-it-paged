@@ -2,9 +2,11 @@
 
 This is normal flow content before any markers.
 
-@spread monster-reveal class=fullbleed template=spread
+@chapter intro opener
 
-@section hero region=left class=hero
+@spread monster-reveal fullbleed template=spread
+
+@section hero lead region=left
 ## Monster Reveal
 A full-bleed moment.
 
@@ -14,7 +16,8 @@ A full-bleed moment.
 
 Back to normal flow. Another paragraph.
 
-@page chapter-1 template=chapter
-@section body
+@chapter chapter-1
+@page chapter-1 featured template=chapter
+@section body prose
 ## Chapter 1
 Main text...

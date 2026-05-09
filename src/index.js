@@ -4,12 +4,14 @@
  * markdown-it-paged
  *
  * Markers:
- *   @spread [name] [key=value ...] [#id] [.class...]
- *   @page   [name] [key=value ...] [#id] [.class...]
- *   @section [name] [key=value ...] [#id] [.class...]
+ *   @chapter [class ...] [key=value ...] [#id] [.class...]
+ *   @spread [name|class ...] [key=value ...] [#id] [.class...]
+ *   @page   [name|class ...] [key=value ...] [#id] [.class...]
+ *   @section [name|class ...] [key=value ...] [#id] [.class...]
  *   @break
  *
  * Output:
+ *   chapter -> <div class="chapter ..." ...>
  *   spread  -> <div class="spread ..." data-spread="name" ...>
  *   page    -> <div class="page ..." data-page="name" ...>
  *   section -> <div class="region ..." data-section="name" data-region="..." ...>
@@ -56,27 +58,34 @@ function parseMarkerLine(line) {
 
   if (buf) tokens.push(buf);
 
-  const head = tokens[0]; // "@spread" | "@page" | "@section" | "@break"
+  const head = tokens[0]; // "@chapter" | "@spread" | "@page" | "@section" | "@break"
   const kind = head.slice(1);
 
-  if (!['spread', 'page', 'section', 'break'].includes(kind)) return null;
+  if (!['chapter', 'spread', 'page', 'section', 'break'].includes(kind)) return null;
 
   if (kind === 'break') {
     return { kind, name: null, attrs: {} };
   }
 
-  let idx = 1;
-  let name = null;
+  const body = tokens.slice(1);
+  const hasExplicitAttrsOrShorthand = body.some(
+    (token) => token.includes('=') || token.startsWith('.') || token.startsWith('#')
+  );
+  const bareTokens = body.filter(
+    (token) => !token.includes('=') && !token.startsWith('.') && !token.startsWith('#')
+  );
 
-  // Optional name (2nd token) if not an attr/shorthand
-  if (
-    tokens[idx] &&
-    !tokens[idx].includes('=') &&
-    !tokens[idx].startsWith('.') &&
-    !tokens[idx].startsWith('#')
-  ) {
-    name = tokens[idx];
-    idx++;
+  let name = null;
+  let idx = 1;
+
+  if (kind !== 'chapter') {
+    if (hasExplicitAttrsOrShorthand && bareTokens.length) {
+      name = bareTokens[0];
+      idx = tokens.indexOf(name, 1) + 1;
+    } else if (bareTokens.length === 1) {
+      name = bareTokens[0];
+      idx = tokens.indexOf(name, 1) + 1;
+    }
   }
 
   const attrs = {};
@@ -113,7 +122,10 @@ function parseMarkerLine(line) {
       } else {
         attrs[key] = val;
       }
+      continue;
     }
+
+    classes.push(t);
   }
 
   if (classes.length) attrs.class = classes.join(' ');
@@ -186,12 +198,22 @@ function plugin(md, pluginOptions = {}) {
     if (!state.env.__layoutMarkersUsed) return;
 
     const out = [];
+    let chapterOpen = false;
     let spreadOpen = false;
     let pageOpen = false;
     let sectionOpen = false;
 
     let spreadStartedWithNoPagesYet = false;
     let sawAnyPageInsideCurrentSpread = false;
+
+    function closeChapter() {
+      if (!chapterOpen) return;
+      closeSpread();
+      closePage();
+      closeSection();
+      out.push(new state.Token('layout_chapter_close', 'div', -1));
+      chapterOpen = false;
+    }
 
     function closeSection() {
       if (!sectionOpen) return;
@@ -213,6 +235,14 @@ function plugin(md, pluginOptions = {}) {
       spreadOpen = false;
       spreadStartedWithNoPagesYet = false;
       sawAnyPageInsideCurrentSpread = false;
+    }
+
+    function openChapter(meta) {
+      const t = new state.Token('layout_chapter_open', 'div', 1);
+      addClasses(t, 'chapter', meta.attrs && meta.attrs.class ? meta.attrs.class : '');
+      attachDataAttrs(t, 'chapter', meta.name, meta.attrs || {});
+      out.push(t);
+      chapterOpen = true;
     }
 
     function openSpread(meta) {
@@ -259,6 +289,12 @@ function plugin(md, pluginOptions = {}) {
       const meta = tok.meta || {};
       const kind = meta.kind;
       const line = meta.__line || 0;
+
+      if (kind === 'chapter') {
+        closeChapter();
+        openChapter(meta);
+        continue;
+      }
 
       if (kind === 'spread') {
         if (spreadOpen) {
@@ -329,11 +365,14 @@ function plugin(md, pluginOptions = {}) {
       );
     }
 
+    closeChapter();
     closeSpread();
     state.tokens = out;
   });
 
   // Renderer rules for injected tokens
+  md.renderer.rules.layout_chapter_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_chapter_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_spread_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_spread_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_page_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
