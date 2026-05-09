@@ -82,8 +82,8 @@ D
   it("supports space-delimited class lists on markers", () => {
     const input = `@spread fullbleed opener
 
-@page chapter opener template=chapter
-@section intro hero lead region=body
+@page template=chapter chapter opener
+@section region=body intro hero lead
 Hello
 `;
     const { html, warnings } = render(input);

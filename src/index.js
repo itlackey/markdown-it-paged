@@ -28,6 +28,9 @@ function parseMarkerLine(line) {
   const trimmed = line.trim();
   if (!trimmed.startsWith('@')) return null;
 
+  const isBareToken = (token) =>
+    token && !token.includes('=') && !token.startsWith('.') && !token.startsWith('#');
+
   // Tokenize respecting simple quotes: key="a b"
   const tokens = [];
   let buf = '';
@@ -71,12 +74,10 @@ function parseMarkerLine(line) {
   const hasExplicitAttrsOrShorthand = body.some(
     (token) => token.includes('=') || token.startsWith('.') || token.startsWith('#')
   );
-  const bareTokens = body.filter(
-    (token) => !token.includes('=') && !token.startsWith('.') && !token.startsWith('#')
-  );
+  const bareTokens = body.filter(isBareToken);
 
   let name = null;
-  let idx = 1;
+  let nameIndex = -1;
 
   if (kind !== 'chapter') {
     // Bare tokens stay as classes unless the marker is clearly named:
@@ -84,18 +85,20 @@ function parseMarkerLine(line) {
     // make the first bare token unambiguously the marker name.
     if (hasExplicitAttrsOrShorthand && bareTokens.length) {
       name = bareTokens[0];
-      idx = tokens.indexOf(name, 1) + 1;
+      nameIndex = body.findIndex((token) => isBareToken(token));
     } else if (bareTokens.length === 1) {
       name = bareTokens[0];
-      idx = tokens.indexOf(name, 1) + 1;
+      nameIndex = body.findIndex((token) => isBareToken(token));
     }
   }
 
   const attrs = {};
   const classes = [];
 
-  for (; idx < tokens.length; idx++) {
-    const t = tokens[idx];
+  for (let idx = 0; idx < body.length; idx++) {
+    if (idx === nameIndex) continue;
+
+    const t = body[idx];
 
     // shorthand
     if (t.startsWith('.')) {
@@ -211,9 +214,9 @@ function plugin(md, pluginOptions = {}) {
 
     function closeChapter() {
       if (!chapterOpen) return;
-      closeSpread();
-      closePage();
-      closeSection();
+      if (spreadOpen) closeSpread();
+      else if (pageOpen) closePage();
+      else closeSection();
       out.push(new state.Token('layout_chapter_close', 'div', -1));
       chapterOpen = false;
     }
