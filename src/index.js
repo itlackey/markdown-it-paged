@@ -79,6 +79,9 @@ function parseMarkerLine(line) {
   let idx = 1;
 
   if (kind !== 'chapter') {
+    // Bare tokens stay as classes unless the marker is clearly named:
+    // either there is exactly one bare token, or explicit attrs/shorthand
+    // make the first bare token unambiguously the marker name.
     if (hasExplicitAttrsOrShorthand && bareTokens.length) {
       name = bareTokens[0];
       idx = tokens.indexOf(name, 1) + 1;
