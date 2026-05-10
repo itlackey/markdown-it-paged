@@ -353,10 +353,11 @@ function plugin(md, pluginOptions = {}) {
         else if (pageOpen) closePage();
         else if (spreadOpen) closeSpread();
 
-        const b = new state.Token('layout_break', 'div', 0);
-        b.attrSet('class', 'md-break');
-        b.attrSet('aria-hidden', 'true');
-        out.push(b);
+        const bOpen = new state.Token('layout_break_open', 'div', 1);
+        bOpen.attrSet('class', 'md-break');
+        bOpen.attrSet('aria-hidden', 'true');
+        out.push(bOpen);
+        out.push(new state.Token('layout_break_close', 'div', -1));
         continue;
       }
     }
@@ -385,7 +386,8 @@ function plugin(md, pluginOptions = {}) {
   md.renderer.rules.layout_page_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
-  md.renderer.rules.layout_break = () => '<div class="md-break" aria-hidden="true"></div>';
+  md.renderer.rules.layout_break_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_break_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
 
   // Marker tokens are transformed away
   md.renderer.rules.layout_marker = () => '';
