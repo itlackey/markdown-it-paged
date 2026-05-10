@@ -2,6 +2,7 @@
 
 A **markdown-it** extension that lets authors opt-in to print/layout structure using lightweight `@` markers:
 
+- `@chapter` → opens a chapter wrapper
 - `@spread` → opens a spread wrapper
 - `@page` → opens a page wrapper
 - `@section` → opens a region wrapper (content area within a page)
@@ -16,6 +17,25 @@ For print workflows (e.g. Paged.js), authors often need occasional control:
 - create named regions that CSS can position/flow
 
 This plugin keeps authoring **flat** and avoids nested fences/containers.
+
+All markers support extra classes. You can still use `.class` or `class=...`, and you can also provide a space-delimited class list directly after the marker when you don't need a marker name:
+
+```md
+@spread fullbleed opener
+@chapter intro opener
+```
+
+For `@spread`, `@page`, and `@section`:
+
+- bare tokens are classes when the marker is otherwise unnamed
+- once you also add explicit attrs like `template=...` or `region=...`, the first bare token is treated as the marker name
+- any later bare tokens still become classes
+- if you want an unnamed marker with attrs plus classes, keep the classes explicit
+
+```md
+@page template=chapter class="featured opener"
+@section region=main .prose .lead
+```
 
 ## Install
 
@@ -76,8 +96,8 @@ Back to normal flow...
 ```md
 @spread ch1-open template=spread
 
-@page left template=spread-left
-@section hero region=left class=hero
+@page left opener template=spread-left
+@section hero lead region=left
 # Chapter 1
 Intro copy...
 
@@ -85,6 +105,22 @@ Intro copy...
 @section body region=right
 Main text...
 ```
+
+### Chapter wrappers
+
+```md
+@chapter intro opener
+# Introduction
+
+@page cover featured template=chapter
+@section body prose region=main
+Welcome...
+
+@chapter appendix
+## Appendix
+```
+
+Each `@chapter` opens a parent `<div class="chapter ...">` wrapper that stays open until the next `@chapter` marker or the end of the document.
 
 ### `@break` closes the nearest open scope
 
@@ -105,6 +141,7 @@ More...
 
 All wrappers are `div` elements with classes + `data-*` attributes:
 
+- Chapter → `<div class="chapter …">`
 - Spread → `<div class="spread …" data-spread="…">`
 - Page → `<div class="page …" data-page="…">`
 - Section/region → `<div class="region …" data-section="…" data-region="…">`

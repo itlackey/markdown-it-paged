@@ -78,4 +78,37 @@ D
     expect(html).toMatchSnapshot();
     expect(warnings).toMatchSnapshot();
   });
+
+  it("supports space-delimited class lists on markers", () => {
+    const input = `@spread fullbleed opener
+
+@page template=chapter chapter opener
+@section region=body intro hero lead
+Hello
+`;
+    const { html, warnings } = render(input);
+    expect(html).toMatchSnapshot();
+    expect(warnings).toMatchSnapshot();
+  });
+
+  it("wraps content in chapter containers until the next chapter or eof", () => {
+    const input = `@chapter intro opener
+# Intro
+
+@page cover featured template=chapter
+@section body prose region=main
+Welcome
+
+@break
+
+Still in the first chapter.
+
+@chapter appendix
+## Appendix
+Done.
+`;
+    const { html, warnings } = render(input);
+    expect(html).toMatchSnapshot();
+    expect(warnings).toMatchSnapshot();
+  });
 });

@@ -4,12 +4,14 @@
  * markdown-it-paged
  *
  * Markers:
- *   @spread [name] [key=value ...] [#id] [.class...]
- *   @page   [name] [key=value ...] [#id] [.class...]
- *   @section [name] [key=value ...] [#id] [.class...]
+ *   @chapter [class ...] [key=value ...] [#id] [.class...]
+ *   @spread [name|class ...] [key=value ...] [#id] [.class...]
+ *   @page   [name|class ...] [key=value ...] [#id] [.class...]
+ *   @section [name|class ...] [key=value ...] [#id] [.class...]
  *   @break
  *
  * Output:
+ *   chapter -> <div class="chapter ..." ...>
  *   spread  -> <div class="spread ..." data-spread="name" ...>
  *   page    -> <div class="page ..." data-page="name" ...>
  *   section -> <div class="region ..." data-section="name" data-region="..." ...>
@@ -21,6 +23,10 @@
  * Validation:
  *   Warnings are pushed into env.layoutWarnings: Array<{ line, type, message, marker? }>
  */
+
+function isBareToken(token) {
+  return token && !token.includes('=') && !token.startsWith('.') && !token.startsWith('#');
+}
 
 function parseMarkerLine(line) {
   const trimmed = line.trim();
@@ -56,34 +62,45 @@ function parseMarkerLine(line) {
 
   if (buf) tokens.push(buf);
 
-  const head = tokens[0]; // "@spread" | "@page" | "@section" | "@break"
+  const head = tokens[0]; // "@chapter" | "@spread" | "@page" | "@section" | "@break"
   const kind = head.slice(1);
 
-  if (!['spread', 'page', 'section', 'break'].includes(kind)) return null;
+  if (!['chapter', 'spread', 'page', 'section', 'break'].includes(kind)) return null;
 
   if (kind === 'break') {
     return { kind, name: null, attrs: {} };
   }
 
-  let idx = 1;
-  let name = null;
+  const body = tokens.slice(1);
+  const hasExplicitAttrsOrShorthand = body.some(
+    (token) => token.includes('=') || token.startsWith('.') || token.startsWith('#')
+  );
+  const bareTokens = body.filter(isBareToken);
 
-  // Optional name (2nd token) if not an attr/shorthand
-  if (
-    tokens[idx] &&
-    !tokens[idx].includes('=') &&
-    !tokens[idx].startsWith('.') &&
-    !tokens[idx].startsWith('#')
-  ) {
-    name = tokens[idx];
-    idx++;
+  let name = null;
+  let nameIndex = -1;
+  const firstBareTokenIndex = body.findIndex((token) => isBareToken(token));
+
+  if (kind !== 'chapter') {
+    // Bare tokens stay as classes unless the marker is clearly named:
+    // either there is exactly one bare token, or explicit attrs/shorthand
+    // make the first bare token unambiguously the marker name.
+    if (hasExplicitAttrsOrShorthand && bareTokens.length) {
+      name = bareTokens[0];
+      nameIndex = firstBareTokenIndex;
+    } else if (bareTokens.length === 1) {
+      name = bareTokens[0];
+      nameIndex = firstBareTokenIndex;
+    }
   }
 
   const attrs = {};
   const classes = [];
 
-  for (; idx < tokens.length; idx++) {
-    const t = tokens[idx];
+  for (let idx = 0; idx < body.length; idx++) {
+    if (idx === nameIndex) continue;
+
+    const t = body[idx];
 
     // shorthand
     if (t.startsWith('.')) {
@@ -113,7 +130,10 @@ function parseMarkerLine(line) {
       } else {
         attrs[key] = val;
       }
+      continue;
     }
+
+    classes.push(t);
   }
 
   if (classes.length) attrs.class = classes.join(' ');
@@ -186,12 +206,26 @@ function plugin(md, pluginOptions = {}) {
     if (!state.env.__layoutMarkersUsed) return;
 
     const out = [];
+    let chapterOpen = false;
     let spreadOpen = false;
     let pageOpen = false;
     let sectionOpen = false;
 
     let spreadStartedWithNoPagesYet = false;
     let sawAnyPageInsideCurrentSpread = false;
+
+    function closeOpenScopes() {
+      closeSection();
+      closePage();
+      closeSpread();
+    }
+
+    function closeChapter() {
+      if (!chapterOpen) return;
+      closeOpenScopes();
+      out.push(new state.Token('layout_chapter_close', 'div', -1));
+      chapterOpen = false;
+    }
 
     function closeSection() {
       if (!sectionOpen) return;
@@ -213,6 +247,14 @@ function plugin(md, pluginOptions = {}) {
       spreadOpen = false;
       spreadStartedWithNoPagesYet = false;
       sawAnyPageInsideCurrentSpread = false;
+    }
+
+    function openChapter(meta) {
+      const t = new state.Token('layout_chapter_open', 'div', 1);
+      addClasses(t, 'chapter', meta.attrs?.class || '');
+      attachDataAttrs(t, 'chapter', null, meta.attrs || {});
+      out.push(t);
+      chapterOpen = true;
     }
 
     function openSpread(meta) {
@@ -259,6 +301,12 @@ function plugin(md, pluginOptions = {}) {
       const meta = tok.meta || {};
       const kind = meta.kind;
       const line = meta.__line || 0;
+
+      if (kind === 'chapter') {
+        closeChapter();
+        openChapter(meta);
+        continue;
+      }
 
       if (kind === 'spread') {
         if (spreadOpen) {
@@ -311,10 +359,11 @@ function plugin(md, pluginOptions = {}) {
         else if (pageOpen) closePage();
         else if (spreadOpen) closeSpread();
 
-        const b = new state.Token('layout_break', 'div', 0);
-        b.attrSet('class', 'md-break');
-        b.attrSet('aria-hidden', 'true');
-        out.push(b);
+        const bOpen = new state.Token('layout_break_open', 'div', 1);
+        bOpen.attrSet('class', 'md-break');
+        bOpen.attrSet('aria-hidden', 'true');
+        out.push(bOpen);
+        out.push(new state.Token('layout_break_close', 'div', -1));
         continue;
       }
     }
@@ -329,18 +378,22 @@ function plugin(md, pluginOptions = {}) {
       );
     }
 
-    closeSpread();
+    if (chapterOpen) closeChapter();
+    else closeSpread();
     state.tokens = out;
   });
 
   // Renderer rules for injected tokens
+  md.renderer.rules.layout_chapter_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_chapter_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_spread_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_spread_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_page_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_page_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
-  md.renderer.rules.layout_break = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_break_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_break_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
 
   // Marker tokens are transformed away
   md.renderer.rules.layout_marker = () => '';
