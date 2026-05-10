@@ -252,7 +252,7 @@ function plugin(md, pluginOptions = {}) {
     function openChapter(meta) {
       const t = new state.Token('layout_chapter_open', 'div', 1);
       addClasses(t, 'chapter', meta.attrs?.class || '');
-      attachDataAttrs(t, 'chapter', meta.name, meta.attrs || {});
+      attachDataAttrs(t, 'chapter', null, meta.attrs || {});
       out.push(t);
       chapterOpen = true;
     }
