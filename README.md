@@ -210,4 +210,4 @@ npm run example:render
 
 ## License
 
-CC-BY-4.0
+MPL-2.0
