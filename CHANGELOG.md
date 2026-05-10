@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Switch project license to MPL-2.0
+
 ## 0.1.0
 - Initial release: @spread/@page/@section/@break markers
 - Opt-in behavior (no markers -> no wrappers)
