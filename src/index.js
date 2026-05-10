@@ -78,6 +78,7 @@ function parseMarkerLine(line) {
 
   let name = null;
   let nameIndex = -1;
+  const firstBareTokenIndex = body.findIndex((token) => isBareToken(token));
 
   if (kind !== 'chapter') {
     // Bare tokens stay as classes unless the marker is clearly named:
@@ -85,10 +86,10 @@ function parseMarkerLine(line) {
     // make the first bare token unambiguously the marker name.
     if (hasExplicitAttrsOrShorthand && bareTokens.length) {
       name = bareTokens[0];
-      nameIndex = body.findIndex((token) => isBareToken(token));
+      nameIndex = firstBareTokenIndex;
     } else if (bareTokens.length === 1) {
       name = bareTokens[0];
-      nameIndex = body.findIndex((token) => isBareToken(token));
+      nameIndex = firstBareTokenIndex;
     }
   }
 
@@ -212,11 +213,15 @@ function plugin(md, pluginOptions = {}) {
     let spreadStartedWithNoPagesYet = false;
     let sawAnyPageInsideCurrentSpread = false;
 
+    function closeOpenScopes() {
+      closeSection();
+      closePage();
+      closeSpread();
+    }
+
     function closeChapter() {
       if (!chapterOpen) return;
-      if (spreadOpen) closeSpread();
-      else if (pageOpen) closePage();
-      else closeSection();
+      closeOpenScopes();
       out.push(new state.Token('layout_chapter_close', 'div', -1));
       chapterOpen = false;
     }
