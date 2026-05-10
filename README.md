@@ -25,7 +25,7 @@ All markers support extra classes. You can still use `.class` or `class=...`, an
 @chapter intro opener
 ```
 
-For `@spread`, `@page`, and `@section`, bare tokens become ambiguous once you also add explicit attrs like `template=...` or `region=...`. In that form, the first bare token is treated as the marker name. If you want an unnamed marker with attrs plus classes, keep the classes explicit:
+For `@spread`, `@page`, and `@section`, bare tokens become ambiguous once you also add explicit attrs like `template=...` or `region=...`. In that form, the first bare token is treated as the marker name, and any later bare tokens still become classes. If you want an unnamed marker with attrs plus classes, keep the classes explicit:
 
 ```md
 @page template=chapter class="featured opener"
