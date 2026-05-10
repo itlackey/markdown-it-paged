@@ -24,12 +24,13 @@
  *   Warnings are pushed into env.layoutWarnings: Array<{ line, type, message, marker? }>
  */
 
+function isBareToken(token) {
+  return token && !token.includes('=') && !token.startsWith('.') && !token.startsWith('#');
+}
+
 function parseMarkerLine(line) {
   const trimmed = line.trim();
   if (!trimmed.startsWith('@')) return null;
-
-  const isBareToken = (token) =>
-    token && !token.includes('=') && !token.startsWith('.') && !token.startsWith('#');
 
   // Tokenize respecting simple quotes: key="a b"
   const tokens = [];
@@ -250,7 +251,7 @@ function plugin(md, pluginOptions = {}) {
 
     function openChapter(meta) {
       const t = new state.Token('layout_chapter_open', 'div', 1);
-      addClasses(t, 'chapter', meta.attrs && meta.attrs.class ? meta.attrs.class : '');
+      addClasses(t, 'chapter', meta.attrs?.class || '');
       attachDataAttrs(t, 'chapter', meta.name, meta.attrs || {});
       out.push(t);
       chapterOpen = true;
@@ -377,8 +378,8 @@ function plugin(md, pluginOptions = {}) {
       );
     }
 
-    closeChapter();
-    closeSpread();
+    if (chapterOpen) closeChapter();
+    else closeSpread();
     state.tokens = out;
   });
 
