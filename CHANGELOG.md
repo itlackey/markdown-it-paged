@@ -1,18 +1,13 @@
 # Changelog
 
-## [Unreleased] 0.4.0
-- `@section` now emits `class="section"` instead of `class="region"`
-- `@break` semantics changed: now only closes the nearest open `@section` (no-op if none open); no break div emitted
-- New `@page-break` marker: forces a page break in flow without opening a named page container; emits `<div class="md-page-break" aria-hidden="true">`
-- `@chapter` no longer auto-closes at EOF; Paged.js handles document-end implicitly
-- `@section` now auto-closes at EOF (explicit `closeSection()` before EOF spread logic)
-- CSS: `.region` rule replaced by `.section { break-inside: avoid; }`
-- CSS: `.md-break` rule replaced by `.md-page-break { break-before: page; }`
-
 ## 0.3.0
-- Add `@end-section` marker: explicitly closes the currently open section region mid-page
-- `@end-section` with no open section is a no-op (no warning, no output)
-- `@end-section` does not close the enclosing `@page` — only the section within it
+- New `@end-section` marker: explicitly closes the open section region mid-page without forcing a page break
+- New `@page-break` marker: forces a page break in flow without opening a named page container
+- New `@column-break` marker: forces a column break within a multi-column section; emits a zero-height `<div class="md-column-break">` with `break-after: column`
+- New `@break` semantics: now only closes the nearest open `@section` (no-op if none open); no longer closes pages or emits a break div
+- `@section` now emits `class="section"` (was `class="region"`); CSS updated to match
+- `@section` auto-closes at EOF; `@chapter` is intentionally left open at EOF
+- `@page` no longer closes on `@section` — page wrapper persists across section transitions
 - Switch project license to MPL-2.0
 
 ## 0.1.0
