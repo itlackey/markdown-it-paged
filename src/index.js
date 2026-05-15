@@ -67,9 +67,9 @@ function parseMarkerLine(line) {
   const head = tokens[0]; // "@chapter" | "@spread" | "@page" | "@section" | "@break"
   const kind = head.slice(1);
 
-  if (!['chapter', 'spread', 'page', 'section', 'break', 'page-break', 'end-section'].includes(kind)) return null;
+  if (!['chapter', 'spread', 'page', 'section', 'break', 'page-break', 'column-break', 'end-section'].includes(kind)) return null;
 
-  if (kind === 'break' || kind === 'page-break' || kind === 'end-section') {
+  if (kind === 'break' || kind === 'page-break' || kind === 'column-break' || kind === 'end-section') {
     return { kind, name: null, attrs: {} };
   }
 
@@ -366,6 +366,15 @@ function plugin(md, pluginOptions = {}) {
         continue;
       }
 
+      if (kind === 'column-break') {
+        // Forces a column break within a multi-column section
+        const t = new state.Token('layout_column_break', 'div', 0);
+        t.attrSet('class', 'md-column-break');
+        t.attrSet('aria-hidden', 'true');
+        out.push(t);
+        continue;
+      }
+
       if (kind === 'end-section') {
         // Explicitly closes the currently open section region.
         // If no section is open, this is a no-op.
@@ -402,6 +411,7 @@ function plugin(md, pluginOptions = {}) {
   md.renderer.rules.layout_section_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_page_break = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_column_break = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
 
   // Marker tokens are transformed away
   md.renderer.rules.layout_marker = () => '';

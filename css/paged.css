@@ -11,3 +11,12 @@
 
 /* Best-effort: keep sections together */
 .section { break-inside: avoid; }
+
+/* Column break within a multi-column section */
+.md-column-break {
+  break-after: column;
+  height: 0;
+  font-size: 0;
+  line-height: 0;
+  visibility: hidden;
+}
