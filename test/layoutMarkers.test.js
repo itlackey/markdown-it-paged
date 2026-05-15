@@ -126,7 +126,7 @@ Single column content after section.
     expect(html).toMatchSnapshot();
     expect(warnings).toMatchSnapshot();
     // section div should be present and closed before the trailing paragraph
-    expect(html).toContain('<div class="region"');
+    expect(html).toContain('<div class="section"');
     expect(html).toContain('</div>');
     // The trailing paragraph must appear after the section close
     const sectionCloseIdx = html.indexOf('</div>', html.indexOf('Left column content.'));
@@ -145,8 +145,8 @@ More content.
     const { html, warnings } = render(input);
     expect(html).toMatchSnapshot();
     expect(warnings).toMatchSnapshot();
-    // No region div should appear since no @section was opened
-    expect(html).not.toContain('class="region');
+    // No section div should appear since no @section was opened
+    expect(html).not.toContain('class="section');
   });
 
   it("content after @end-section within the same @page renders outside any region div", () => {
@@ -162,12 +162,12 @@ Outside two-column.
     const { html, warnings } = render(input);
     expect(html).toMatchSnapshot();
     expect(warnings).toMatchSnapshot();
-    // Confirm the region div does not wrap the final paragraph
+    // Confirm the section div does not wrap the final paragraph
     const regionCloseIdx = html.lastIndexOf('</div>');
     const outsideParaIdx = html.indexOf('Outside two-column.');
-    // The region close tag for the section should appear before the outside paragraph
+    // The section close tag should appear before the outside paragraph
     // (the page close wraps everything, so we check the section close specifically)
-    const regionOpenIdx = html.indexOf('<div class="region');
+    const regionOpenIdx = html.indexOf('<div class="section');
     const regionCloseAfterOpen = html.indexOf('</div>', regionOpenIdx);
     expect(outsideParaIdx).toBeGreaterThan(regionCloseAfterOpen);
   });

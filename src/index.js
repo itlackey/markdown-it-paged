@@ -9,13 +9,15 @@
  *   @page   [name|class ...] [key=value ...] [#id] [.class...]
  *   @section [name|class ...] [key=value ...] [#id] [.class...]
  *   @break
+ *   @page-break
  *
  * Output:
- *   chapter -> <div class="chapter ..." ...>
- *   spread  -> <div class="spread ..." data-spread="name" ...>
- *   page    -> <div class="page ..." data-page="name" ...>
- *   section -> <div class="region ..." data-section="name" data-region="..." ...>
- *   break   -> <div class="md-break" aria-hidden="true"></div>
+ *   chapter    -> <div class="chapter ..." ...>
+ *   spread     -> <div class="spread ..." data-spread="name" ...>
+ *   page       -> <div class="page ..." data-page="name" ...>
+ *   section    -> <div class="section ..." data-section="name" data-region="..." ...>
+ *   break      -> closes nearest open @section (no-op if none open)
+ *   page-break -> <div class="md-page-break" aria-hidden="true"></div>
  *
  * Opt-in:
  *   If no markers are present, plugin does nothing.
@@ -65,9 +67,9 @@ function parseMarkerLine(line) {
   const head = tokens[0]; // "@chapter" | "@spread" | "@page" | "@section" | "@break"
   const kind = head.slice(1);
 
-  if (!['chapter', 'spread', 'page', 'section', 'break', 'end-section'].includes(kind)) return null;
+  if (!['chapter', 'spread', 'page', 'section', 'break', 'page-break', 'end-section'].includes(kind)) return null;
 
-  if (kind === 'break' || kind === 'end-section') {
+  if (kind === 'break' || kind === 'page-break' || kind === 'end-section') {
     return { kind, name: null, attrs: {} };
   }
 
@@ -284,7 +286,7 @@ function plugin(md, pluginOptions = {}) {
 
     function openSection(meta) {
       const t = new state.Token('layout_section_open', 'div', 1);
-      addClasses(t, 'region', meta.attrs && meta.attrs.class ? meta.attrs.class : '');
+      addClasses(t, 'section', meta.attrs && meta.attrs.class ? meta.attrs.class : '');
       attachDataAttrs(t, 'section', meta.name, meta.attrs || {});
       out.push(t);
       sectionOpen = true;
@@ -350,20 +352,17 @@ function plugin(md, pluginOptions = {}) {
       }
 
       if (kind === 'break') {
-        if (!sectionOpen && !pageOpen && !spreadOpen && options.warnOnBreakWithoutScope) {
-          warn(state.env, line, 'break_without_scope', '@break used but no spread/page/section is open. It will still force a page break.', meta);
-        }
+        // @break only closes the nearest open @section; no-op if none open
+        closeSection();
+        continue;
+      }
 
-        // Close nearest open scope: section -> page -> spread
-        if (sectionOpen) closeSection();
-        else if (pageOpen) closePage();
-        else if (spreadOpen) closeSpread();
-
-        const bOpen = new state.Token('layout_break_open', 'div', 1);
-        bOpen.attrSet('class', 'md-break');
-        bOpen.attrSet('aria-hidden', 'true');
-        out.push(bOpen);
-        out.push(new state.Token('layout_break_close', 'div', -1));
+      if (kind === 'page-break') {
+        // Forces a page break in flow without closing a page or opening a named container
+        const t = new state.Token('layout_page_break', 'div', 0);
+        t.attrSet('class', 'md-page-break');
+        t.attrSet('aria-hidden', 'true');
+        out.push(t);
         continue;
       }
 
@@ -375,6 +374,9 @@ function plugin(md, pluginOptions = {}) {
       }
     }
 
+    // At EOF: close any open section explicitly; leave page/spread/chapter open
+    closeSection();
+
     if (spreadOpen && !sawAnyPageInsideCurrentSpread) {
       warn(
         state.env,
@@ -385,8 +387,8 @@ function plugin(md, pluginOptions = {}) {
       );
     }
 
-    if (chapterOpen) closeChapter();
-    else closeSpread();
+    // chapters intentionally left open — Paged.js handles document-end implicitly
+    if (!chapterOpen) closeSpread();
     state.tokens = out;
   });
 
@@ -399,8 +401,7 @@ function plugin(md, pluginOptions = {}) {
   md.renderer.rules.layout_page_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
-  md.renderer.rules.layout_break_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
-  md.renderer.rules.layout_break_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  md.renderer.rules.layout_page_break = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
 
   // Marker tokens are transformed away
   md.renderer.rules.layout_marker = () => '';
