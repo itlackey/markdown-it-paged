@@ -65,9 +65,9 @@ function parseMarkerLine(line) {
   const head = tokens[0]; // "@chapter" | "@spread" | "@page" | "@section" | "@break"
   const kind = head.slice(1);
 
-  if (!['chapter', 'spread', 'page', 'section', 'break'].includes(kind)) return null;
+  if (!['chapter', 'spread', 'page', 'section', 'break', 'end-section'].includes(kind)) return null;
 
-  if (kind === 'break') {
+  if (kind === 'break' || kind === 'end-section') {
     return { kind, name: null, attrs: {} };
   }
 
@@ -364,6 +364,13 @@ function plugin(md, pluginOptions = {}) {
         bOpen.attrSet('aria-hidden', 'true');
         out.push(bOpen);
         out.push(new state.Token('layout_break_close', 'div', -1));
+        continue;
+      }
+
+      if (kind === 'end-section') {
+        // Explicitly closes the currently open section region.
+        // If no section is open, this is a no-op.
+        closeSection();
         continue;
       }
     }
