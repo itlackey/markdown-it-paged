@@ -410,8 +410,18 @@ function plugin(md, pluginOptions = {}) {
   md.renderer.rules.layout_page_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_open = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
   md.renderer.rules.layout_section_close = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
-  md.renderer.rules.layout_page_break = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
-  md.renderer.rules.layout_column_break = (tokens, idx, opts, env, self) => self.renderToken(tokens, idx, opts);
+  // layout_page_break and layout_column_break use nesting:0 on a <div>, which causes
+  // renderToken to emit only an opening tag. All subsequent content becomes children of
+  // the unclosed div, so the following @end-section </div> closes the break div rather
+  // than the section div. Emit a complete open+close pair instead.
+  md.renderer.rules.layout_page_break = (tokens, idx) => {
+    const cls = tokens[idx].attrGet('class') || 'md-page-break';
+    return `<div class="${cls}" aria-hidden="true"></div>\n`;
+  };
+  md.renderer.rules.layout_column_break = (tokens, idx) => {
+    const cls = tokens[idx].attrGet('class') || 'md-column-break';
+    return `<div class="${cls}" aria-hidden="true"></div>\n`;
+  };
 
   // Marker tokens are transformed away
   md.renderer.rules.layout_marker = () => '';
